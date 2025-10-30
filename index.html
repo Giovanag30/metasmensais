@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Metas e Funil (Unidades)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carregando a fonte Montserrat --><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Configurações de Cores e Fontes (Tailwind + Customizações) */
+        :root {
+            --primary-color: #ff8c00; /* Laranja Escuro (DarkOrange) */
+            --secondary-color: #28a745; /* Verde */
+            --bg-light: #f8f9fa; /* Fundo claro */
+            --card-bg: #ffffff; /* Fundo do card */
+            --text-color: #343a40; /* Texto escuro */
+            --border-color: #dee2e6;
+        }
+
+        body {
+            /* Alterado para Montserrat */
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-light);
+        }
+
+        /* Estilo para a grade de indicadores de meta */
+        .grid-metas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Estilo para a seção de Funil (Agora com 3 colunas para os principais estágios + 1 coluna para Leads/Diária) */
+        .funnel-container {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+            /* Alterado para 3 colunas, pois as últimas duas etapas não terão desdobramento por pessoa */
+            grid-template-columns: repeat(2, 1fr); 
+        }
+        
+        /* Estilo para a etapa Venda (final) - Mantido Verde para Sucesso */
+        #funilVenda {
+            background-color: var(--secondary-color);
+            color: white;
+            border-left: 5px solid #1e7e34;
+            /* Faz o bloco de vendas ocupar uma coluna inteira no mobile */
+            grid-column: 1 / -1; 
+        }
+        
+        /* Indicadores de Funil com borda Laranja */
+        .indicador-funil {
+            border-left: 5px solid var(--primary-color);
+        }
+        
+        .indicador-funil.bg-white {
+             border: 1px solid var(--border-color);
+        }
+
+        /* Responsividade para o layout principal */
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr 2fr;
+            }
+            .funnel-container {
+                /* No desktop, 3 colunas para Funil */
+                grid-template-columns: repeat(3, 1fr); 
+            }
+            #funilVenda {
+                /* Vendas ocupa 1 coluna no desktop */
+                grid-column: span 1; 
+            }
+            .daily-goal {
+                /* Meta Diária ocupa 3 colunas no desktop */
+                grid-column: 1 / -1;
+            }
+        }
+
+        /* Estilo para o cabeçalho e logo */
+        .header-content {
+            display: flex;
+            align-items: center;
+            /* Alterado para alinhar à esquerda e o título crescer */
+            justify-content: flex-start; 
+            gap: 1rem; 
+        }
+        .header-content img {
+            max-height: 50px; /* Tamanho da logo */
+            width: auto;
+            object-fit: contain; 
+            flex-shrink: 0; 
+        }
+        @media (min-width: 768px) {
+            .header-content img {
+                max-height: 70px;
+            }
+        }
+        /* Ajuste para o título para que ele ocupe o espaço restante */
+        .header-content h1 {
+            flex-grow: 1;
+            /* Alinhar o título à esquerda se houver só uma logo */
+            text-align: left; 
+            padding: 0;
+            /* No mobile, o título pode centralizar um pouco melhor no espaço */
+            @media (max-width: 767px) {
+                text-align: center;
+            }
+        }
+        
+        /* Estilo para exibir taxas fixas */
+        .taxa-fixa {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background-color: #f7fafc;
+        }
+        .taxa-label {
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+        .taxa-valor {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="p-4 md:p-8 container mx-auto">
+    <div class="header-content mb-6 border-b-4 border-orange-500 pb-2">
+        <!-- Logo 1 (G30) - Esquerda -->
+        <img src="https://raw.githubusercontent.com/Giovanag30/g30/425c7243b9bc4c3277996860a4108e62ab43306b/g30.jpg" alt="Logo G30" class="h-12 md:h-16">
+        
+        <h1 class="text-xl md:text-3xl font-extrabold text-gray-800">
+            <span class="text-orange-600">Dashboard</span> de Metas e Funil de Vendas (Unidades)
+        </h1>
+        
+        <!-- A SEGUNDA LOGO FOI REMOVIDA DAQUI -->
+    </div>
+
+    <div class="grid main-grid gap-6">
+        
+        <!-- COLUNA DE CONFIGURAÇÕES --><div class="card p-6 bg-white rounded-xl shadow-lg h-fit">
+            <h2 class="text-xl font-bold text-gray-700 mb-4">Configurações (Editável)</h2>
+            
+            <!-- Entrada: Meta Mensal - AGORA É UNIDADES --><div class="mb-4">
+                <label for="metaMensal" class="block text-sm font-medium text-gray-600 mb-1">
+                    Meta de Carros Vendidos Mensal (Unidades):
+                </label>
+                <input type="number" id="metaMensal" value="20" min="0" 
+                       class="w-full p-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" 
+                       oninput="calcularDashboard()">
+            </div>
+
+            <!-- Entrada: Número de Semanas --><div class="mb-4">
+                <label for="numSemanas" class="block text-sm font-medium text-gray-600 mb-1">
+                    Número de Semanas no Mês (4 ou 5):
+                </label>
+                <select id="numSemanas" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" 
+                        onchange="calcularDashboard()">
+                    <option value="4" selected>4 Semanas</option>
+                    <option value="5">5 Semanas</option>
+                </select>
+            </div>
+
+            <!-- Entrada: Número de Vendedores --><div class="mb-4">
+                <label for="numVendedores" class="block text-sm font-medium text-gray-600 mb-1">
+                    Número de Vendedores:
+                </label>
+                <input type="number" id="numVendedores" value="2" min="1" 
+                       class="w-full p-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" 
+                       oninput="calcularDashboard()">
+            </div>
+            
+            <!-- CAMPO PESSOAS PROSPECTANDO REMOVIDO -->
+            
+            <hr class="my-4 border-gray-200">
+
+            <!-- Taxas de Conversão do Funil (AGORA SÃO FIXAS) --><h3 class="text-lg font-bold text-gray-700 mb-3">Taxas de Conversão (Valores Fixos)</h3>
+            
+            <!-- 1. Venda / Visita (Fechamento) --><div class="taxa-fixa">
+                <span class="taxa-label">Taxa de Fechamento (Venda/Visita):</span>
+                <span class="taxa-valor">50%</span>
+            </div>
+            
+            <!-- 2. Visita / Agendamento --><div class="taxa-fixa">
+                <span class="taxa-label">Taxa de Visita (Visita/Agendamento):</span>
+                <span class="taxa-valor">40%</span>
+            </div>
+
+            <!-- 3. Agendamento / Ligação Conversada --><div class="taxa-fixa">
+                <span class="taxa-label">Taxa de Agendamento (Agendamento/Ligação):</span>
+                <span class="taxa-valor">45%</span>
+            </div>
+
+            <!-- 4. Ligação Conversada / Lead Total --><div class="taxa-fixa">
+                <span class="taxa-label">Taxa de Ligação (Ligação/Lead):</span>
+                <span class="taxa-valor">35%</span>
+            </div>
+
+        </div>
+
+        <!-- COLUNA DE RESULTADOS --><div class="w-full space-y-6">
+            
+            <!-- Seção de Desdobramento de Metas (Unidades) --><div class="card p-6 bg-white rounded-xl shadow-lg">
+                <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Desdobramento da Meta de Vendas (Unidades)</h2>
+                
+                <div class="grid-metas">
+                    
+                    <div class="p-4 bg-orange-500 text-white rounded-lg shadow-md text-center">
+                        <div class="text-sm opacity-90">Meta Mensal Total</div>
+                        <div class="text-2xl font-bold" id="resMetaMensal">20</div>
+                    </div>
+                    
+                    <div class="p-4 bg-gray-100 text-gray-700 rounded-lg shadow-md text-center">
+                        <div class="text-sm opacity-90">Meta Semanal (Loja)</div>
+                        <div class="text-2xl font-bold text-orange-600" id="resMetaSemanal">5</div>
+                    </div>
+                    
+                    <div class="p-4 bg-gray-100 text-gray-700 rounded-lg shadow-md text-center">
+                        <div class="text-sm opacity-90">Meta Mensal por Vendedor</div>
+                        <div class="text-2xl font-bold text-orange-600" id="resMetaVendedorMensal">10</div>
+                    </div>
+
+                    <!-- NOVO INDICADOR: Meta Semanal por Pessoa -->
+                    <div class="p-4 bg-gray-100 text-gray-700 rounded-lg shadow-md text-center">
+                        <div class="text-sm opacity-90">Meta Semanal por Pessoa</div>
+                        <div class="text-2xl font-bold text-red-600" id="resMetaVendedorSemanal">2.5</div>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <!-- Seção de Engenharia Reversa do Funil (Quantidades) - ESTRUTURA NOVA --><div class="card p-6 bg-white rounded-xl shadow-lg">
+                <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Funil de Atividades Necessárias (Engenharia Reversa)</h2>
+                
+                <div class="funnel-container">
+                    
+                    <!-- VENDAS (Meta - Topo visual) --><div id="funilVenda" class="p-4 rounded-lg shadow-md text-center">
+                        <div class="text-sm font-semibold opacity-90">5. Para alcançar a meta de:</div>
+                        <div class="text-3xl font-extrabold mt-1" id="qntVendasTotal">20</div>
+                        <div class="text-sm mt-1">por pessoa: <span id="qntVendasVendedor">10</span></div>
+                    </div>
+                    
+                    <!-- VISITAS --><div class="indicador-funil p-4 bg-white rounded-lg shadow-md text-center">
+                        <div class="text-sm font-semibold text-gray-500">4. Visitas Necessárias</div>
+                        <div class="text-3xl font-extrabold text-orange-600 mt-1" id="qntVisitasTotal">67</div>
+                        <div class="text-sm mt-1 text-gray-500">por pessoa: <span id="qntVisitasVendedor">34</span></div>
+                    </div>
+
+                    <!-- AGENDAMENTOS --><div class="indicador-funil p-4 bg-white rounded-lg shadow-md text-center">
+                        <div class="text-sm font-semibold text-gray-500">3. Agendamentos Necessários</div>
+                        <div class="text-3xl font-extrabold text-orange-600 mt-1" id="qntAgendamentosTotal">112</div>
+                        <div class="text-sm mt-1 text-gray-500">por pessoa: <span id="qntAgendamentosVendedor">56</span></div>
+                    </div>
+
+                    <!-- LIGAÇÕES CONVERSADAS (Total Loja) --><div class="indicador-funil p-4 bg-white rounded-lg shadow-md text-center">
+                        <div class="text-sm font-semibold text-gray-500">2. Ligações Conversadas Necessárias (Mensal)</div>
+                        <div class="text-3xl font-extrabold text-orange-600 mt-1" id="qntLigacoesTotal">150</div>
+                        <!-- Desdobramento por prospector removido -->
+                    </div>
+                    
+                    <!-- LEADS TOTAIS (Mensal) --><div class="indicador-funil p-4 bg-white rounded-lg shadow-md text-center">
+                        <div class="text-sm font-semibold text-gray-500">1. Leads Totais (Mensal)</div>
+                        <div class="text-3xl font-extrabold text-orange-600 mt-1" id="qntLeadsTotal">600</div>
+                        <!-- Desdobramento por prospector removido -->
+                    </div>
+                    
+                    <!-- Meta Diária de Leads (Total Loja) --><div class="indicador-funil p-4 bg-white rounded-lg shadow-md text-center daily-goal">
+                        <div class="text-sm font-semibold text-gray-500">Meta Diária de Leads (Total Loja)</div>
+                        <div class="text-3xl font-extrabold text-red-600 mt-1" id="metaDiariaLeads">30</div>
+                        <!-- Desdobramento por prospector removido -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-6 p-4 text-sm text-gray-600 bg-white rounded-lg shadow-lg col-span-full">
+        <p><strong>Observações:</strong></p>
+        <ul class="list-disc list-inside">
+            <li>A divisão é feita assumindo 20 dias úteis no mês para o cálculo da meta diária.</li>
+            <li>Todos os cálculos são arredondados **para cima** para garantir que a meta de unidades seja atingida (engenharia reversa).</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // Função utilitária para formatar números como inteiro (arredondando para cima)
+    const formatarNumero = (valor) => {
+        // Garante que o número de carros/atividades seja um inteiro, arredondado para cima.
+        return Math.ceil(valor).toLocaleString('pt-BR');
+    };
+
+    // Função que formata números com duas casas decimais (para a meta semanal por pessoa)
+    const formatarNumeroDecimal = (valor) => {
+        return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+    
+    // Função que recalcula todo o dashboard
+    function calcularDashboard() {
+        // 1. Coleta de Variáveis de Configuração
+        const metaMensal = parseFloat(document.getElementById('metaMensal').value) || 0;
+        const numSemanas = parseInt(document.getElementById('numSemanas').value) || 1;
+        const numVendedores = parseInt(document.getElementById('numVendedores').value) || 1;
+        
+        // 2. Taxas de Conversão FIXAS (em decimal)
+        const taxaVendaVisita = 0.50;  // 50%
+        const taxaVisitaAgendamento = 0.40; // 40%
+        const taxaAgendamentoLigacao = 0.45; // 45%
+        const taxaLigacaoLead = 0.35; // 35%
+
+        const DIAS_UTEIS_MES = 20;
+
+
+        // =================================================================
+        // 3. CÁLCULOS DE DESDOBRAMENTO DE META (UNIDADES)
+        // =================================================================
+        
+        // Meta Semanal (Loja)
+        const metaSemanal = metaMensal / numSemanas;
+        
+        // Meta Mensal por Vendedor
+        const metaVendedorMensal = metaMensal / numVendedores;
+
+        // NOVO CÁLCULO: Meta Semanal por Vendedor
+        const metaVendedorSemanal = metaSemanal / numVendedores;
+        
+        // 4. Atualização dos Indicadores (UNIDADES)
+        document.getElementById('resMetaMensal').textContent = formatarNumero(metaMensal);
+        document.getElementById('resMetaSemanal').textContent = formatarNumero(metaSemanal);
+        document.getElementById('resMetaVendedorMensal').textContent = formatarNumero(metaVendedorMensal);
+        document.getElementById('resMetaVendedorSemanal').textContent = formatarNumeroDecimal(metaVendedorSemanal); // Atualizado para formatar com decimal
+
+
+        // =================================================================
+        // 5. CÁLCULOS DE ENGENHARIA REVERSA (QUANTIDADES)
+        // Funil: Leads -> Ligações -> Agendamentos -> Visitas -> Vendas
+        // =================================================================
+
+        // 5.1. Quantidade de Vendas (Fechamentos) - É a meta de entrada
+        const qntVendasTotal = metaMensal;
+        
+        // 5.2. Quantidade de Visitas Necessárias (Reversa Venda/Visita)
+        const qntVisitasTotal = qntVendasTotal / (taxaVendaVisita > 0 ? taxaVendaVisita : 1);
+
+        // 5.3. Quantidade de Agendamentos Necessários (Reversa Visita/Agendamento)
+        const qntAgendamentosTotal = qntVisitasTotal / (taxaVisitaAgendamento > 0 ? taxaVisitaAgendamento : 1);
+
+        // 5.4. Quantidade de Ligações Conversadas Necessárias (Reversa Agendamento/Ligação)
+        const qntLigacoesTotal = qntAgendamentosTotal / (taxaAgendamentoLigacao > 0 ? taxaAgendamentoLigacao : 1);
+        
+        // 5.5. Quantidade de Leads Totais Necessários (Reversa Ligação/Lead)
+        const qntLeadsTotal = qntLigacoesTotal / (taxaLigacaoLead > 0 ? taxaLigacaoLead : 1);
+        
+        // 5.6. Meta Diária de Leads (Total Loja)
+        const metaDiariaLeads = qntLeadsTotal / DIAS_UTEIS_MES;
+
+        // 5.7. Desdobramento por Pessoa (Vendedor)
+        const qntVendasVendedor = qntVendasTotal / numVendedores;
+        const qntVisitasVendedor = qntVisitasTotal / numVendedores;
+        const qntAgendamentosVendedor = qntAgendamentosTotal / numVendedores;
+        
+        // 5.8. Desdobramento (Total Loja - Pré-vendas/Prospecção)
+        const qntLigacoesTotalLoja = qntLigacoesTotal;
+        const qntLeadsTotalLoja = qntLeadsTotal;
+        const metaDiariaLeadsTotalLoja = metaDiariaLeads;
+
+
+        // =================================================================
+        // 6. Atualização dos Indicadores (FUNIL)
+        // =================================================================
+        
+        // Vendas (Fechamentos)
+        document.getElementById('qntVendasTotal').textContent = formatarNumero(qntVendasTotal);
+        document.getElementById('qntVendasVendedor').textContent = formatarNumero(qntVendasVendedor);
+        
+        // Visitas
+        document.getElementById('qntVisitasTotal').textContent = formatarNumero(qntVisitasTotal);
+        document.getElementById('qntVisitasVendedor').textContent = formatarNumero(qntVisitasVendedor);
+        
+        // Agendamentos
+        document.getElementById('qntAgendamentosTotal').textContent = formatarNumero(qntAgendamentosTotal);
+        document.getElementById('qntAgendamentosVendedor').textContent = formatarNumero(qntAgendamentosVendedor);
+        
+        // Ligações Conversadas (Total Loja)
+        document.getElementById('qntLigacoesTotal').textContent = formatarNumero(qntLigacoesTotalLoja);
+        
+        // Leads Totais (Mensal)
+        document.getElementById('qntLeadsTotal').textContent = formatarNumero(qntLeadsTotalLoja);
+
+        // Meta Diária de Leads (Total Loja)
+        document.getElementById('metaDiariaLeads').textContent = formatarNumero(metaDiariaLeadsTotalLoja);
+    }
+
+    // Chama a função ao carregar a página para exibir os valores iniciais
+    window.onload = calcularDashboard; 
+
+</script>
+</body>
+</html>
